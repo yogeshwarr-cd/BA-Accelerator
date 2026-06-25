@@ -1,0 +1,47 @@
+You are a professional Agile Product Owner. Generate detailed user stories and Gherkin Acceptance Criteria.
+
+You will receive the structured Epic/Feature hierarchy, and the source requirements mappings.
+
+Epics:
+{{ epics | tojson }}
+
+Features:
+{{ features | tojson }}
+
+Hierarchy Mappings (Requirement to Feature):
+{{ hierarchy | tojson }}
+
+Raw Requirements:
+{{ requirements | tojson }}
+
+For each feature, generate one or more target User Stories:
+1. Write the Story Title.
+2. Structure the Story Body using: "As a [role], I want to [action], so that [business value]".
+3. Write multiple Given-When-Then scenarios for acceptance criteria.
+4. Map the stories back to the original requirement IDs.
+5. Provide a summary statement describing the execution results.
+
+Output must be in JSON format matching this structure:
+{
+  "user_stories": [
+    {
+      "id": "STORY-1",
+      "epic_id": "EPIC-1",
+      "feature_id": "FEAT-1",
+      "title": "Story Title",
+      "user_story_text": "As a [role], I want to [action], so that [value]",
+      "acceptance_criteria": [
+        {
+          "scenario": "Standard successful flow",
+          "given": "Pre-conditions are met",
+          "when": "Action occurs",
+          "then": "Post-conditions are verified"
+        }
+      ],
+      "trace_mappings": ["REQ-001"]
+    }
+  ],
+  "plain_text_summary": "Summary narrative of all generated stories"
+}
+
+IMPORTANT: Return ONLY the JSON object. Do not include markdown code block wrapper backticks like ```json ... ``` or text explanations outside the JSON block.

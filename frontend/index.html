@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BA Accelerator - Dashboard Mockup</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-dark: #1e293b;
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --text-light: #f8fafc;
+            --text-gray: #94a3b8;
+            --border-color: #334155;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #020617;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            background: linear-gradient(to right, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .hero {
+            background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.1), transparent);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .hero h2 {
+            margin-top: 0;
+            color: var(--text-light);
+        }
+
+        .badge {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card p {
+            color: var(--text-gray);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-gray);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            background-color: #020617;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>BA Accelerator</h1>
+        <span class="badge">React Frontend Placeholder</span>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <h2>AI-Powered Requirement-to-User-Story Generation System</h2>
+            <p>Welcome to the BA Accelerator user interface shell. This is a React client placeholder matching the backend deployment schema.</p>
+            <p>To run the production client interface, execute the frontend build tools inside the local directory once your React implementation is complete.</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>Ingest Module <span style="color: var(--primary);">●</span></h3>
+                <p>Ingest specifications and product documents asynchronously from Jira, Confluence, SharePoint, Google Drive, or Local Files using Docling converters.</p>
+            </div>
+            <div class="card">
+                <h3>LangGraph Pipeline <span style="color: var(--accent);">●</span></h3>
+                <p>Orchestrate 4-agent state processing with automated low-confidence recovery retry loops and human review checkpoint verification gates.</p>
+            </div>
+            <div class="card">
+                <h3>Quality & Export <span style="color: var(--primary);">●</span></h3>
+                <p>Validate story results against INVEST and Hallucination checklists, then push directly into Jira or download Excel/PDF/JSON reports.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 BA Accelerator. Built with NextGen Architecture.
+    </footer>
+</body>
+</html>
