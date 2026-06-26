@@ -62,25 +62,41 @@ async def run_pipeline(
                 "source_type": job.source_type,
                 "raw_text": raw_text,
                 "fingerprint": job.meta_info.get("fingerprint", "") if job.meta_info else "",
+                # Agent 1 outputs
                 "requirements": [],
                 "actors": [],
                 "business_rules": [],
                 "ambiguities": [],
                 "conflicts": [],
                 "confidence_score": 0.0,
+                # Agent 2 outputs
                 "epics": [],
                 "features": [],
                 "hierarchy": [],
+                "requirement_mapping": [],
+                "epic_hierarchy": [],
+                "dependencies": [],
+                "priority": [],
+                "coverage_report": {},
+                "metadata": {},
+                "traceability_matrix": [],
+                # Agent 3 outputs
                 "user_stories": [],
                 "plain_text_summary": "",
+                # Agent 4 outputs
                 "validation_results": {},
                 "quality_score": 0.0,
                 "is_approved": False,
+                # Orchestrator outputs
+                "master_context": {},
+                "story_contexts": [],
+                # Execution tracing
                 "retry_count": 0,
                 "max_retries": max_retries,
                 "status": "RUNNING",
                 "error_message": None,
-                "human_approved": False
+                "human_approved": False,
+                "approval_status": None
             }
 
             config = {"configurable": {"thread_id": job_id}}
@@ -136,25 +152,41 @@ async def stream_pipeline_progress(
             "source_type": job.source_type,
             "raw_text": raw_text,
             "fingerprint": job.meta_info.get("fingerprint", "") if job.meta_info else "",
+            # Agent 1 outputs
             "requirements": [],
             "actors": [],
             "business_rules": [],
             "ambiguities": [],
             "conflicts": [],
             "confidence_score": 0.0,
+            # Agent 2 outputs
             "epics": [],
             "features": [],
             "hierarchy": [],
+            "requirement_mapping": [],
+            "epic_hierarchy": [],
+            "dependencies": [],
+            "priority": [],
+            "coverage_report": {},
+            "metadata": {},
+            "traceability_matrix": [],
+            # Agent 3 outputs
             "user_stories": [],
             "plain_text_summary": "",
+            # Agent 4 outputs
             "validation_results": {},
             "quality_score": 0.0,
             "is_approved": False,
+            # Orchestrator outputs
+            "master_context": {},
+            "story_contexts": [],
+            # Execution tracing
             "retry_count": 0,
             "max_retries": job.config.get("max_retries", 3) if job.config else 3,
             "status": "RUNNING",
             "error_message": None,
-            "human_approved": False
+            "human_approved": False,
+            "approval_status": None
         }
 
         config = {"configurable": {"thread_id": job_id}}
