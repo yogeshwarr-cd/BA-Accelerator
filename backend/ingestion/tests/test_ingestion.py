@@ -1,6 +1,7 @@
 import pytest
 from backend.ingestion.text_normalizer import TextNormalizer
 from backend.ingestion.fingerprint import Fingerprint
+from backend.ingestion.schemas import IngestionOutput
 
 def test_text_normalization_whitespace():
     """
@@ -27,6 +28,26 @@ def test_fingerprint_generation():
     hash2 = Fingerprint.calculate(text)
     assert hash1 == hash2
     assert len(hash1) == 64
+
+
+def test_ingestion_output_keeps_raw_text():
+    """Ingestion output should preserve the original raw text for downstream reuse."""
+    output = IngestionOutput(
+        confidence_score=1.0,
+        raw_context="raw context",
+        text="clean text",
+        chunks=["clean text"],
+        metadata={},
+        fingerprint="abc123",
+        language="en",
+        source_type="txt",
+        chunk_count=1,
+        char_count=10,
+        extraction_method="docling",
+        raw_text="original raw text",
+    )
+
+    assert output.raw_text == "original raw text"
 
 # INTEGRATION NOTE
 # Run test suite using: pytest backend/ingestion/tests/
