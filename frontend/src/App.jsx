@@ -1,76 +1,116 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { AppProvider, useApp } from './context/AppContext';
+import { AnimatePresence, motion } from 'framer-motion';
 
-export default function App() {
-  const [jobId, setJobId] = useState('');
-  const [status, setStatus] = useState('Idle');
+// Layout
+import Sidebar from './components/Layout/Sidebar';
+import Navbar from './components/Layout/Navbar';
 
-  const handleStartPipeline = () => {
-    setStatus('Running Multi-Agent Pipeline...');
+// Pages
+import Landing from './pages/Landing';
+import Dashboard from './pages/Dashboard';
+import Analytics from './pages/Analytics';
+import HistoryPage from './pages/History';
+import Documents from './pages/Documents';
+import Settings from './pages/Settings';
+
+// Global overlays
+import CommandPalette from './components/Common/CommandPalette';
+import FloatingHelp from './components/Common/FloatingHelp';
+
+/* ─────────────────────────────────────────
+   AppShell — rendered inside AppProvider
+───────────────────────────────────────── */
+function AppShell() {
+  const { currentPage } = useApp();
+
+  // Track sidebar collapse for main content offset
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Listen for the '[' keypress that Sidebar uses to collapse
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === '[' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        setSidebarCollapsed(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // Landing page: full-screen, no sidebar
+  if (currentPage === 'landing') {
+    return (
+      <>
+        <CommandPalette />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="landing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <Landing />
+          </motion.div>
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  const pageMap = {
+    dashboard: <Dashboard />,
+    analytics: <Analytics />,
+    history:   <HistoryPage />,
+    documents: <Documents />,
+    settings:  <Settings />,
   };
 
+  const PageContent = pageMap[currentPage] ?? <Dashboard />;
+
   return (
-    <div style={{
-      backgroundColor: '#0f172a',
-      color: '#f8fafc',
-      fontFamily: 'sans-serif',
-      minHeight: '100vh',
-      padding: '2rem'
-    }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <header style={{ borderBottom: '1px solid #334155', paddingBottom: '1rem', marginBottom: '2rem' }}>
-          <h1 style={{ color: '#3b82f6', margin: 0 }}>BA Accelerator UI</h1>
-          <p style={{ color: '#94a3b8', margin: '0.5rem 0 0' }}>Agile Requirement-to-User-Story System</p>
-        </header>
+    <div className="flex min-h-screen bg-slate-950">
+      {/* Global overlays */}
+      <CommandPalette />
 
-        <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '1.5rem', marginBottom: '1.5rem' }}>
-          <h3 style={{ margin: '0 0 1rem' }}>Initiate Story Generation Job</h3>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <input 
-              type="text" 
-              placeholder="Enter Job ID..." 
-              value={jobId}
-              onChange={(e) => setJobId(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                borderRadius: '4px',
-                border: '1px solid #475569',
-                backgroundColor: '#0f172a',
-                color: '#f8fafc'
-              }}
-            />
-            <button 
-              onClick={handleStartPipeline}
-              style={{
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
+      {/* Sidebar — fixed, toggles width via its own state */}
+      <Sidebar onCollapse={setSidebarCollapsed} />
+
+      {/* Main content area — offset mirrors sidebar width */}
+      <div
+        className="flex flex-1 flex-col min-h-screen transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? '4rem' : '16rem' }}
+      >
+        <Navbar />
+
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPage}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
             >
-              Run Pipeline
-            </button>
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '1.5rem' }}>
-          <h3 style={{ margin: '0 0 0.5rem' }}>Execution Logs Stream</h3>
-          <div style={{
-            backgroundColor: '#0f172a',
-            border: '1px solid #334155',
-            borderRadius: '4px',
-            padding: '1rem',
-            fontFamily: 'monospace',
-            minHeight: '150px',
-            color: '#10b981'
-          }}>
-            Status: {status}
-          </div>
-        </div>
+              {PageContent}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
+
+      {/* Floating AI Assistant */}
+      <FloatingHelp />
     </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   Root — wrap in context provider
+───────────────────────────────────────── */
+export default function App() {
+  return (
+    <AppProvider>
+      <AppShell />
+    </AppProvider>
   );
 }
