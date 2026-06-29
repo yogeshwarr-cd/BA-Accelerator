@@ -123,6 +123,10 @@ class IngestionOutput(BaseAcceleratorOutput):
         ...,
         description="Clean, normalised full text extracted from the source.",
     )
+    raw_text: str = Field(
+        default="",
+        description="Original raw extracted text before normalization.",
+    )
     chunks: list[str] = Field(
         ...,
         description="Text split into overlapping chunks ready for embedding.",

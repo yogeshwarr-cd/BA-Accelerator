@@ -191,6 +191,7 @@ async def run_ingestion(
         raw_context=raw_text[:2000],  # first 2000 chars as raw context
         # IngestionOutput fields
         text=clean_text,
+        raw_text=raw_text,
         chunks=chunks,
         metadata=merged_meta,
         fingerprint=fingerprint,

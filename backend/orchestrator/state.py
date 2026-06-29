@@ -24,6 +24,13 @@ class GraphState(TypedDict):
     epics: List[Dict[str, Any]]
     features: List[Dict[str, Any]]
     hierarchy: List[Dict[str, Any]]
+    requirement_mapping: List[Dict[str, Any]]
+    epic_hierarchy: List[Dict[str, Any]]
+    dependencies: List[Dict[str, Any]]
+    priority: List[Dict[str, Any]]
+    coverage_report: Dict[str, Any]
+    metadata: Dict[str, Any]
+    traceability_matrix: List[Dict[str, Any]]
     
     # Agent 3 outputs
     user_stories: List[Dict[str, Any]]
@@ -34,12 +41,19 @@ class GraphState(TypedDict):
     quality_score: float
     is_approved: bool
     
+    # Master Context (merged Agent1 + Agent2)
+    master_context: Dict[str, Any]
+    
+    # Story Contexts for Agent 3
+    story_contexts: List[Dict[str, Any]]
+    
     # Execution tracing
     retry_count: int
     max_retries: int
     status: str  # PENDING, RUNNING, HUMAN_REVIEW, COMPLETED, FAILED
     error_message: Optional[str]
     human_approved: bool
+    approval_status: Optional[str]
 
 # INTEGRATION NOTE
 # StateGraph is instantiated using this TypedDict interface.
