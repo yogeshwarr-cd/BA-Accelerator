@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from ingestion.fingerprint import (
+from backend.ingestion.fingerprint import (
     generate_fingerprint,
     is_duplicate,
     register_fingerprint,

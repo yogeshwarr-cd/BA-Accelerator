@@ -31,7 +31,7 @@ class TestJiraConnectorAuthenticate:
     """Test authenticate() — success and failure paths."""
 
     def _make_connector(self, server_url="https://jira.test", username="user", token="tok"):
-        from ingestion.connectors.jira_connector import JiraConnector
+        from backend.ingestion.connectors.jira_connector import JiraConnector
         return JiraConnector(server_url=server_url, username=username, api_token=token)
 
     def test_authenticate_success(self):
@@ -41,7 +41,7 @@ class TestJiraConnectorAuthenticate:
         mock_client = MagicMock()
         mock_client.myself.return_value = {"displayName": "Test User"}
 
-        with patch("ingestion.connectors.jira_connector.Jira", return_value=mock_client):
+        with patch("backend.ingestion.connectors.jira_connector.Jira", return_value=mock_client):
             connector.authenticate()
 
         assert connector._client is mock_client
@@ -49,8 +49,8 @@ class TestJiraConnectorAuthenticate:
 
     def test_authenticate_failure_missing_credentials(self):
         """Missing credentials raise ConnectorAuthError immediately."""
-        from shared.exceptions import ConnectorAuthError
-        from ingestion.connectors.jira_connector import JiraConnector
+        from backend.shared.exceptions import ConnectorAuthError
+        from backend.ingestion.connectors.jira_connector import JiraConnector
 
         connector = JiraConnector(server_url="", username="", api_token="")
 
@@ -59,13 +59,13 @@ class TestJiraConnectorAuthenticate:
 
     def test_authenticate_failure_api_error(self):
         """API call failure raises ConnectorAuthError."""
-        from shared.exceptions import ConnectorAuthError
+        from backend.shared.exceptions import ConnectorAuthError
         connector = self._make_connector()
 
         mock_client = MagicMock()
         mock_client.myself.side_effect = Exception("401 Unauthorized")
 
-        with patch("ingestion.connectors.jira_connector.Jira", return_value=mock_client), \
+        with patch("backend.ingestion.connectors.jira_connector.Jira", return_value=mock_client), \
              pytest.raises(ConnectorAuthError, match="Jira authentication failed"):
             connector.authenticate()
 
@@ -74,7 +74,7 @@ class TestJiraConnectorFetch:
     """Test fetch() — with and without attachments."""
 
     def _make_authenticated_connector(self):
-        from ingestion.connectors.jira_connector import JiraConnector
+        from backend.ingestion.connectors.jira_connector import JiraConnector
         connector = JiraConnector(
             server_url="https://jira.test",
             username="user",
@@ -83,7 +83,7 @@ class TestJiraConnectorFetch:
         mock_client = MagicMock()
         mock_client.myself.return_value = {"displayName": "Test User"}
 
-        with patch("ingestion.connectors.jira_connector.Jira", return_value=mock_client):
+        with patch("backend.ingestion.connectors.jira_connector.Jira", return_value=mock_client):
             connector.authenticate()
 
         return connector, mock_client
@@ -193,8 +193,8 @@ class TestJiraConnectorFetch:
     @pytest.mark.asyncio
     async def test_fetch_requires_authentication(self):
         """Fetching without authenticate() raises ConnectorAuthError."""
-        from shared.exceptions import ConnectorAuthError
-        from ingestion.connectors.jira_connector import JiraConnector
+        from backend.shared.exceptions import ConnectorAuthError
+        from backend.ingestion.connectors.jira_connector import JiraConnector
 
         connector = JiraConnector(
             server_url="https://jira.test", username="u", api_token="t"
@@ -205,13 +205,13 @@ class TestJiraConnectorFetch:
 
 class TestJiraConnectorHealthCheck:
     def _make_authenticated_connector(self):
-        from ingestion.connectors.jira_connector import JiraConnector
+        from backend.ingestion.connectors.jira_connector import JiraConnector
         connector = JiraConnector(
             server_url="https://jira.test", username="user", api_token="token"
         )
         mock_client = MagicMock()
         mock_client.myself.return_value = {"displayName": "User"}
-        with patch("ingestion.connectors.jira_connector.Jira", return_value=mock_client):
+        with patch("backend.ingestion.connectors.jira_connector.Jira", return_value=mock_client):
             connector.authenticate()
         return connector, mock_client
 
@@ -236,7 +236,7 @@ class TestJiraConnectorHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_false_no_client(self):
         """health_check returns False when client is not initialised."""
-        from ingestion.connectors.jira_connector import JiraConnector
+        from backend.ingestion.connectors.jira_connector import JiraConnector
         connector = JiraConnector(server_url="x", username="u", api_token="t")
 
         result = await connector.health_check()
@@ -249,7 +249,7 @@ class TestJiraConnectorHealthCheck:
 
 class TestConfluenceConnector:
     def _make_connector(self):
-        from ingestion.connectors.confluence_connector import ConfluenceConnector
+        from backend.ingestion.connectors.confluence_connector import ConfluenceConnector
         return ConfluenceConnector(
             server_url="https://wiki.test",
             username="user",
@@ -263,15 +263,15 @@ class TestConfluenceConnector:
         mock_client = MagicMock()
         mock_client.get_current_user.return_value = {"displayName": "Wiki User"}
 
-        with patch("ingestion.connectors.confluence_connector.Confluence", return_value=mock_client):
+        with patch("backend.ingestion.connectors.confluence_connector.Confluence", return_value=mock_client):
             connector.authenticate()
 
         assert connector._client is mock_client
 
     def test_authenticate_failure(self):
         """Incorrect credentials raise ConnectorAuthError."""
-        from shared.exceptions import ConnectorAuthError
-        from ingestion.connectors.confluence_connector import ConfluenceConnector
+        from backend.shared.exceptions import ConnectorAuthError
+        from backend.ingestion.connectors.confluence_connector import ConfluenceConnector
 
         connector = ConfluenceConnector(server_url="", username="", api_token="")
 
@@ -297,7 +297,7 @@ class TestConfluenceConnector:
             "space": {"key": "BA"},
         }
 
-        with patch("ingestion.connectors.confluence_connector.Confluence", return_value=mock_client):
+        with patch("backend.ingestion.connectors.confluence_connector.Confluence", return_value=mock_client):
             connector.authenticate()
 
         result = await connector.fetch("123456")
@@ -314,7 +314,7 @@ class TestConfluenceConnector:
         mock_client = MagicMock()
         mock_client.get_current_user.return_value = {"displayName": "User"}
 
-        with patch("ingestion.connectors.confluence_connector.Confluence", return_value=mock_client):
+        with patch("backend.ingestion.connectors.confluence_connector.Confluence", return_value=mock_client):
             connector.authenticate()
 
         result = await connector.health_check()
@@ -333,7 +333,7 @@ class TestConfluenceConnector:
 
 class TestSharePointConnector:
     def _make_connector(self):
-        from ingestion.connectors.sharepoint_connector import SharePointConnector
+        from backend.ingestion.connectors.sharepoint_connector import SharePointConnector
         return SharePointConnector(
             tenant_id="tenant-123",
             client_id="client-abc",
@@ -350,7 +350,7 @@ class TestSharePointConnector:
             "access_token": "my-access-token"
         }
 
-        with patch("ingestion.connectors.sharepoint_connector.msal.ConfidentialClientApplication",
+        with patch("backend.ingestion.connectors.sharepoint_connector.msal.ConfidentialClientApplication",
                    return_value=mock_app):
             connector.authenticate()
 
@@ -358,7 +358,7 @@ class TestSharePointConnector:
 
     def test_authenticate_failure_msal_error(self):
         """MSAL token failure raises ConnectorAuthError."""
-        from shared.exceptions import ConnectorAuthError
+        from backend.shared.exceptions import ConnectorAuthError
         connector = self._make_connector()
 
         mock_app = MagicMock()
@@ -367,15 +367,15 @@ class TestSharePointConnector:
             "error_description": "Client secret wrong.",
         }
 
-        with patch("ingestion.connectors.sharepoint_connector.msal.ConfidentialClientApplication",
+        with patch("backend.ingestion.connectors.sharepoint_connector.msal.ConfidentialClientApplication",
                    return_value=mock_app), \
              pytest.raises(ConnectorAuthError, match="MSAL token acquisition failed"):
             connector.authenticate()
 
     def test_authenticate_failure_missing_credentials(self):
         """Missing credentials raise ConnectorAuthError."""
-        from shared.exceptions import ConnectorAuthError
-        from ingestion.connectors.sharepoint_connector import SharePointConnector
+        from backend.shared.exceptions import ConnectorAuthError
+        from backend.ingestion.connectors.sharepoint_connector import SharePointConnector
 
         connector = SharePointConnector(tenant_id="", client_id="", client_secret="")
 
@@ -413,8 +413,8 @@ class TestSharePointConnector:
                 return mock_content_resp
             return mock_meta_resp
 
-        with patch("ingestion.connectors.sharepoint_connector.httpx.AsyncClient") as mock_cls, \
-             patch("ingestion.connectors.sharepoint_connector.load_from_file", mock_load):
+        with patch("backend.ingestion.connectors.sharepoint_connector.httpx.AsyncClient") as mock_cls, \
+             patch("backend.ingestion.docling_loader.load_from_file", mock_load):
             mock_http = AsyncMock()
             mock_http.__aenter__ = AsyncMock(return_value=mock_http)
             mock_http.__aexit__ = AsyncMock(return_value=False)
@@ -440,7 +440,7 @@ class TestSharePointConnector:
 
 class TestGDriveConnector:
     def _make_connector(self, creds_json: str = '{"type":"service_account"}'):
-        from ingestion.connectors.gdrive_connector import GDriveConnector
+        from backend.ingestion.connectors.gdrive_connector import GDriveConnector
         return GDriveConnector(credentials_json=creds_json)
 
     def test_authenticate_success_inline_json(self):
@@ -450,17 +450,17 @@ class TestGDriveConnector:
         mock_creds = MagicMock()
         mock_service = MagicMock()
 
-        with patch("ingestion.connectors.gdrive_connector.service_account.Credentials.from_service_account_info",
+        with patch("google.oauth2.service_account.Credentials.from_service_account_info",
                    return_value=mock_creds) as mock_from_info, \
-             patch("ingestion.connectors.gdrive_connector.build", return_value=mock_service):
+             patch("googleapiclient.discovery.build", return_value=mock_service):
             connector.authenticate()
 
         assert connector._service is mock_service
 
     def test_authenticate_failure_no_credentials(self):
         """Missing credentials raise ConnectorAuthError."""
-        from shared.exceptions import ConnectorAuthError
-        from ingestion.connectors.gdrive_connector import GDriveConnector
+        from backend.shared.exceptions import ConnectorAuthError
+        from backend.ingestion.connectors.gdrive_connector import GDriveConnector
 
         connector = GDriveConnector(credentials_json="")
         with pytest.raises(ConnectorAuthError, match="Google Drive credentials not set"):
@@ -499,11 +499,7 @@ class TestGDriveConnector:
 
             return export_text, mock_file_meta
 
-        with patch(
-            "ingestion.connectors.gdrive_connector.GDriveConnector._GDriveConnector__download_sync",
-            side_effect=lambda *a, **kw: (export_text, mock_file_meta),
-        ):
-            pass  # inner method patching handled via asyncio.to_thread
+
 
         # Patch asyncio.to_thread to call mock_download_sync directly
         import asyncio
@@ -511,7 +507,7 @@ class TestGDriveConnector:
         async def mock_to_thread(fn, *args, **kwargs):
             return mock_download_sync()
 
-        with patch("ingestion.connectors.gdrive_connector.asyncio.to_thread", new=mock_to_thread):
+        with patch("backend.ingestion.connectors.gdrive_connector.asyncio.to_thread", new=mock_to_thread):
             result = await connector.fetch("file123")
 
         assert "Business requirements" in result["text"]
@@ -552,8 +548,8 @@ class TestRunIngestion:
             encoding="utf-8",
         )
 
-        from ingestion.schemas import IngestionInput, IngestionOutput, SourceType
-        from ingestion import run_ingestion
+        from backend.ingestion.schemas import IngestionInput, IngestionOutput, SourceType
+        from backend.ingestion import run_ingestion
 
         inp = IngestionInput(
             source_type=SourceType.txt,
@@ -580,8 +576,8 @@ class TestRunIngestion:
         txt = tmp_path / "dup.txt"
         txt.write_text("Duplicate requirement content. " * 50, encoding="utf-8")
 
-        from ingestion.schemas import IngestionInput, SourceType
-        from ingestion import run_ingestion
+        from backend.ingestion.schemas import IngestionInput, SourceType
+        from backend.ingestion import run_ingestion
 
         inp = IngestionInput(source_type=SourceType.txt, file_path=str(txt))
 

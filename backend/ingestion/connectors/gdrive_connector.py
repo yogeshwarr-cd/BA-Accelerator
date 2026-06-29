@@ -21,7 +21,7 @@ from typing import Any
 from designlab_core.utilities.env import get_env
 from designlab_core.utilities.logger import get_logger, log_error, log_info, log_warning
 
-from ...shared.exceptions import ConnectorAuthError
+from backend.shared.exceptions import ConnectorAuthError
 from .base_connector import BaseConnector
 
 logger = get_logger("ingestion.connectors.gdrive")
@@ -94,8 +94,13 @@ class GDriveConnector(BaseConnector):
                 return build("drive", "v3", credentials=creds, cache_discovery=False)
 
             import asyncio as _asyncio
-            loop = _asyncio.get_event_loop()
-            if loop.is_running():
+            try:
+                loop = _asyncio.get_running_loop()
+                is_running = loop.is_running()
+            except RuntimeError:
+                is_running = False
+
+            if is_running:
                 # We're inside an async context — defer to thread
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as pool:

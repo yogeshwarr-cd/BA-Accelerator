@@ -87,7 +87,7 @@ if __name__ == "__main__":
         "backend.main:app", 
         host=settings.HOST or "0.0.0.0", 
         port=settings.PORT or 8000, 
-        reload=True
+        reload=False
     )
 
 # INTEGRATION NOTE

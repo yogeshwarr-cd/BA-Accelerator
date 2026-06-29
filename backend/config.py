@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     """
     DATABASE_URL: str = Field(default="postgresql+asyncpg://postgres:postgres@localhost:5432/ba_accelerator")
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
+    HOST: str = Field(default="0.0.0.0")
+    PORT: int = Field(default=8000)
     
     GROQ_API_KEY: str = Field(default="")
     GEMINI_API_KEY: str = Field(default="")

@@ -6,7 +6,7 @@ Tests for text_normalizer.py
 from __future__ import annotations
 
 import pytest
-from ingestion.text_normalizer import normalize, detect_language, chunk_text
+from backend.ingestion.text_normalizer import normalize, detect_language, chunk_text
 
 
 class TestNormalize:
@@ -85,12 +85,14 @@ class TestDetectLanguage:
         assert isinstance(result, str)
         assert len(result) >= 2
 
-    def test_unknown_on_exception(self):
+    def test_unknown_on_exception(self, monkeypatch):
         """If langdetect raises, returns 'unknown'."""
-        with pytest.raises(Exception):
-            pass  # langdetect installed; just verify it returns str
+        import backend.ingestion.text_normalizer as tn
+        def mock_detect(text):
+            raise Exception("test exception")
+        monkeypatch.setattr(tn, "_langdetect_detect", mock_detect)
         result = detect_language("xyzxyzxyz")
-        assert isinstance(result, str)
+        assert result == "unknown"
 
 
 class TestChunkText:

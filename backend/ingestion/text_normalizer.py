@@ -99,7 +99,7 @@ def normalize(text: str) -> str:
     text = re.sub(r"[ \t]+", " ", text)
 
     # 6. Strip each line individually
-    text = "\n".join(line.rstrip() for line in text.split("\n"))
+    text = "\n".join(line.strip() for line in text.split("\n"))
 
     return text.strip()
 

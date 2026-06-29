@@ -48,4 +48,3 @@ class DecisionRulesEngine:
             return DecisionOutcome.REWORK
 
         return DecisionOutcome.PASS
-```

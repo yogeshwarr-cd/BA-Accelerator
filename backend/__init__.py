@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-import os
-import sys
-
-# Add the framework directory to sys.path to allow importing designlab_core directly
-framework_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../framework"))
-if framework_path not in sys.path:
-    sys.path.insert(0, framework_path)
-=======
 """Backend package initialization.
 
 Ensures the local framework package can be imported as `designlab_core`
@@ -23,4 +14,3 @@ _framework_path = _project_root / "framework"
 
 if str(_framework_path) not in sys.path:
     sys.path.insert(0, str(_framework_path))
->>>>>>> origin/main

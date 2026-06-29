@@ -26,7 +26,7 @@ from atlassian import Jira
 from designlab_core.utilities.env import get_env
 from designlab_core.utilities.logger import get_logger, log_error, log_info, log_warning
 
-from ...shared.exceptions import ConnectorAuthError
+from backend.shared.exceptions import ConnectorAuthError
 from .base_connector import BaseConnector
 
 logger = get_logger("ingestion.connectors.jira")
