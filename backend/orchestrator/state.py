@@ -17,6 +17,8 @@ class GraphState(TypedDict):
     ambiguities: List[str]
     conflicts: List[str]
     confidence_score: float
+    primary_input: Dict[str, Any]
+    validation_context: Dict[str, Any]
     
     # Agent 2 outputs
     epics: List[Dict[str, Any]]

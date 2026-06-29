@@ -171,7 +171,9 @@ async def agent1_node(state: GraphState) -> Dict[str, Any]:
                 actors=req.actors,
                 business_rules=req.business_rules,
                 trace_id=req.id,
-                confidence_score=result.confidence_score
+                confidence_score=result.confidence_score,
+                primary_input=result.primary_input.model_dump(),
+                validation_context=result.validation_context.model_dump(),
             ))
         session.add_all(db_reqs)
         await session.commit()
@@ -187,7 +189,9 @@ async def agent1_node(state: GraphState) -> Dict[str, Any]:
         "business_rules": result.business_rules,
         "ambiguities": result.ambiguities,
         "conflicts": result.conflicts,
-        "confidence_score": result.confidence_score
+        "confidence_score": result.confidence_score,
+        "primary_input": result.primary_input.model_dump(),
+        "validation_context": result.validation_context.model_dump(),
     }
 
 async def confidence_check_node(state: GraphState) -> Dict[str, Any]:
