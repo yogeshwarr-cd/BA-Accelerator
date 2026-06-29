@@ -155,7 +155,34 @@ async def run(input_data: Dict[str, Any], config: Optional[Dict[str, Any]] = Non
     
     logger.info("Executing Agent 2 (Epic & Feature Planner)...")
     
-    requirements = input_data.get("requirements", [])
+    # Support two input shapes:
+    # - { "requirements": [...] } (legacy)
+    # - { "primary_input": { "functional_requirements": [...], "non_functional_requirements": [...] } } (Agent-1 output)
+    requirements = []
+    if input_data.get("requirements"):
+        requirements = input_data.get("requirements", [])
+    elif input_data.get("primary_input"):
+        primary = input_data.get("primary_input", {})
+        # convert PrimaryInput functional and non-functional requirements into unified requirement dicts
+        for fr in primary.get("functional_requirements", []):
+            # fr may be a Pydantic object or dict
+            frd = fr.model_dump() if hasattr(fr, "model_dump") else fr
+            requirements.append({
+                "id": frd.get("id"),
+                "content": frd.get("description") or frd.get("name") or "",
+                "traceability_id": frd.get("traceability_id"),
+                "source_type": input_data.get("source_type", "")
+            })
+        for nfr in primary.get("non_functional_requirements", []):
+            nfrd = nfr.model_dump() if hasattr(nfr, "model_dump") else nfr
+            requirements.append({
+                "id": nfrd.get("id"),
+                "content": nfrd.get("description") or nfrd.get("name") or "",
+                "traceability_id": nfrd.get("traceability_id"),
+                "category": nfrd.get("category"),
+                "source_type": input_data.get("source_type", "")
+            })
+
     if not requirements:
         logger.warning("Empty requirements list passed to Agent 2. Returning empty plan.")
         empty_coverage = CoverageReport(

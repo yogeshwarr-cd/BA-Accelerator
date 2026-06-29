@@ -8,7 +8,7 @@ from backend.api.schemas import APIIngestRequest, APIIngestResponse
 from backend.api.middleware import verify_api_key
 from backend.db.postgres import get_db_session
 from backend.db.models import Job
-from backend.ingestion.docling_loader import DoclingLoader
+from backend.ingestion.docling_loader import load_from_file
 from backend.ingestion.text_normalizer import TextNormalizer
 from backend.ingestion.fingerprint import Fingerprint
 
@@ -55,8 +55,7 @@ async def ingest_requirements(
     try:
         # 2. Retrieve content based on connector selection
         if source_type == "FILE":
-            loader = DoclingLoader()
-            raw_text = await loader.load(target)
+            raw_text = await load_from_file(target)
             
         elif source_type == "JIRA":
             conn = JiraConnector()

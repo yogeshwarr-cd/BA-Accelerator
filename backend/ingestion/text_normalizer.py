@@ -214,6 +214,14 @@ def chunk_text(
     return chunks
 
 
+class TextNormalizer:
+    """Compatibility wrapper for the text normalizer API."""
+
+    clean = staticmethod(normalize)
+    detect_language = staticmethod(detect_language)
+    chunk_text = staticmethod(chunk_text)
+
+
 # ── Private helper ─────────────────────────────────────────────────────────────
 
 def _rfind_any(text: str, needles: list[str], start: int, end: int) -> int:

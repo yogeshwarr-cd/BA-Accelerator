@@ -8,9 +8,9 @@ from sqlalchemy import select, update
 
 from backend.api.schemas import PipelineRunRequest, PipelineRunResponse
 from backend.api.middleware import verify_api_key
-from backend.db.postgres import get_db_session
+from backend.db.postgres import AsyncSessionLocal, get_db_session
 from backend.db.models import Job
-from backend.orchestrator.graph import pipeline_graph
+from backend.orchestrator.graph import pipeline_graph, get_pipeline_debug_state, reset_pipeline_debug_state
 from backend.shared.logger import get_logger
 
 logger = get_logger(__name__)
@@ -44,6 +44,7 @@ async def run_pipeline(
     await db.commit()
 
     logger.info(f"Triggered pipeline run for job {job_id}.")
+    reset_pipeline_debug_state(job_id)
     
     # We trigger the execution asynchronously. In a real system, we might push to Celery/Redis queue.
     # Here, we initiate it directly in background tasks or let the user monitor via the stream route.
@@ -114,6 +115,14 @@ async def run_pipeline(
     asyncio.create_task(run_in_background())
 
     return PipelineRunResponse(job_id=job_id, status="RUNNING")
+
+
+@router.get("/debug/{job_id}")
+async def get_pipeline_debug(job_id: str, _auth: str = Depends(verify_api_key)):
+    """
+    Returns temporary debug state for the requested pipeline job.
+    """
+    return get_pipeline_debug_state(job_id)
 
 
 @router.get("/stream/{job_id}")

@@ -52,6 +52,14 @@ async def on_startup():
     except Exception as e:
         logger.critical(f"Failed to initialize database tables: {str(e)}")
 
+@app.get("/", tags=["Root"])
+def root():
+    return {
+        "message": "BA Accelerator API Running",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     """

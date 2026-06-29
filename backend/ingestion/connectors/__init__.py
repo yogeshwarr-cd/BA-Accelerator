@@ -4,11 +4,11 @@
 Connector package exports.
 """
 
-from ingestion.connectors.base_connector import BaseConnector
-from ingestion.connectors.jira_connector import JiraConnector
-from ingestion.connectors.confluence_connector import ConfluenceConnector
-from ingestion.connectors.sharepoint_connector import SharePointConnector
-from ingestion.connectors.gdrive_connector import GDriveConnector
+from .base_connector import BaseConnector
+from .jira_connector import JiraConnector
+from .confluence_connector import ConfluenceConnector
+from .sharepoint_connector import SharePointConnector
+from .gdrive_connector import GDriveConnector
 
 __all__ = [
     "BaseConnector",

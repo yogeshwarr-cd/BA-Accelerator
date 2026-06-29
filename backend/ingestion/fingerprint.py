@@ -179,6 +179,24 @@ async def register_fingerprint_async(fingerprint: str, redis_client: Any) -> Non
         )
 
 
+class Fingerprint:
+    """Compatibility wrapper exposing the legacy fingerprint API."""
+
+    calculate = staticmethod(generate_fingerprint)
+
+    @staticmethod
+    async def check_and_register(fingerprint: str, job_id: str | None = None, redis_client: Any = None) -> bool:
+        """Return True when the fingerprint already existed in Redis."""
+        if job_id is not None and redis_client is None:
+            # Legacy route passes job_id as the second positional argument.
+            redis_client = None
+
+        is_dup = await is_duplicate_async(fingerprint, redis_client)
+        if not is_dup:
+            await register_fingerprint_async(fingerprint, redis_client)
+        return is_dup
+
+
 # ─── INTEGRATION NOTE ─────────────────────────────────────────────────────────
 # Produces : generate_fingerprint()        → IngestionOutput.fingerprint
 #            is_duplicate_async()          → IngestionOutput.is_duplicate
