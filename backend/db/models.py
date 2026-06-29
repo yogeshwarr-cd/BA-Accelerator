@@ -43,6 +43,8 @@ class Requirement(Base):
     conflicts = Column(JSON, nullable=True)
     confidence_score = Column(Float, nullable=False, default=1.0)
     trace_id = Column(String(100), nullable=False)
+    primary_input = Column(JSON, nullable=True)
+    validation_context = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=get_utc_now)
 
     job = relationship("Job", back_populates="requirements")
