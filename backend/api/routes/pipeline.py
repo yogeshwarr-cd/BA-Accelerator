@@ -8,9 +8,9 @@ from sqlalchemy import select, update
 
 from backend.api.schemas import PipelineRunRequest, PipelineRunResponse
 from backend.api.middleware import verify_api_key
-from backend.db.postgres import get_db_session
+from backend.db.postgres import AsyncSessionLocal, get_db_session
 from backend.db.models import Job
-from backend.orchestrator.graph import pipeline_graph
+from backend.orchestrator.graph import pipeline_graph, get_pipeline_debug_state, reset_pipeline_debug_state
 from backend.shared.logger import get_logger
 
 logger = get_logger(__name__)
@@ -44,6 +44,7 @@ async def run_pipeline(
     await db.commit()
 
     logger.info(f"Triggered pipeline run for job {job_id}.")
+    reset_pipeline_debug_state(job_id)
     
     # We trigger the execution asynchronously. In a real system, we might push to Celery/Redis queue.
     # Here, we initiate it directly in background tasks or let the user monitor via the stream route.
@@ -62,25 +63,41 @@ async def run_pipeline(
                 "source_type": job.source_type,
                 "raw_text": raw_text,
                 "fingerprint": job.meta_info.get("fingerprint", "") if job.meta_info else "",
+                # Agent 1 outputs
                 "requirements": [],
                 "actors": [],
                 "business_rules": [],
                 "ambiguities": [],
                 "conflicts": [],
                 "confidence_score": 0.0,
+                # Agent 2 outputs
                 "epics": [],
                 "features": [],
                 "hierarchy": [],
+                "requirement_mapping": [],
+                "epic_hierarchy": [],
+                "dependencies": [],
+                "priority": [],
+                "coverage_report": {},
+                "metadata": {},
+                "traceability_matrix": [],
+                # Agent 3 outputs
                 "user_stories": [],
                 "plain_text_summary": "",
+                # Agent 4 outputs
                 "validation_results": {},
                 "quality_score": 0.0,
                 "is_approved": False,
+                # Orchestrator outputs
+                "master_context": {},
+                "story_contexts": [],
+                # Execution tracing
                 "retry_count": 0,
                 "max_retries": max_retries,
                 "status": "RUNNING",
                 "error_message": None,
-                "human_approved": False
+                "human_approved": False,
+                "approval_status": None
             }
 
             config = {"configurable": {"thread_id": job_id}}
@@ -98,6 +115,14 @@ async def run_pipeline(
     asyncio.create_task(run_in_background())
 
     return PipelineRunResponse(job_id=job_id, status="RUNNING")
+
+
+@router.get("/debug/{job_id}")
+async def get_pipeline_debug(job_id: str, _auth: str = Depends(verify_api_key)):
+    """
+    Returns temporary debug state for the requested pipeline job.
+    """
+    return get_pipeline_debug_state(job_id)
 
 
 @router.get("/stream/{job_id}")
@@ -136,25 +161,41 @@ async def stream_pipeline_progress(
             "source_type": job.source_type,
             "raw_text": raw_text,
             "fingerprint": job.meta_info.get("fingerprint", "") if job.meta_info else "",
+            # Agent 1 outputs
             "requirements": [],
             "actors": [],
             "business_rules": [],
             "ambiguities": [],
             "conflicts": [],
             "confidence_score": 0.0,
+            # Agent 2 outputs
             "epics": [],
             "features": [],
             "hierarchy": [],
+            "requirement_mapping": [],
+            "epic_hierarchy": [],
+            "dependencies": [],
+            "priority": [],
+            "coverage_report": {},
+            "metadata": {},
+            "traceability_matrix": [],
+            # Agent 3 outputs
             "user_stories": [],
             "plain_text_summary": "",
+            # Agent 4 outputs
             "validation_results": {},
             "quality_score": 0.0,
             "is_approved": False,
+            # Orchestrator outputs
+            "master_context": {},
+            "story_contexts": [],
+            # Execution tracing
             "retry_count": 0,
             "max_retries": job.config.get("max_retries", 3) if job.config else 3,
             "status": "RUNNING",
             "error_message": None,
-            "human_approved": False
+            "human_approved": False,
+            "approval_status": None
         }
 
         config = {"configurable": {"thread_id": job_id}}

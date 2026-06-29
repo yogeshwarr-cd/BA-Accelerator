@@ -37,10 +37,10 @@ from typing import Any
 from designlab_core.evaluation.validator import ValidationResult, validate_output
 from designlab_core.utilities.logger import get_logger, log_error, log_info, log_warning
 
-from ingestion.schemas import IngestionInput, IngestionOutput, SourceType
-from ingestion.docling_loader import load as _docling_load
-from ingestion.text_normalizer import normalize, detect_language, chunk_text
-from ingestion.fingerprint import (
+from .schemas import IngestionInput, IngestionOutput, SourceType
+from .docling_loader import load as _docling_load
+from .text_normalizer import normalize, detect_language, chunk_text
+from .fingerprint import (
     generate_fingerprint,
     is_duplicate_async,
     register_fingerprint_async,
@@ -71,7 +71,7 @@ async def _route_source(inp: IngestionInput) -> dict[str, Any]:
 
     # ── JIRA ──────────────────────────────────────────────────────────────────
     if st == SourceType.jira:
-        from ingestion.connectors.jira_connector import JiraConnector
+        from .connectors.jira_connector import JiraConnector
         connector = JiraConnector()
         connector.authenticate()
         result = await connector.fetch(
@@ -83,7 +83,7 @@ async def _route_source(inp: IngestionInput) -> dict[str, Any]:
 
     # ── CONFLUENCE ────────────────────────────────────────────────────────────
     if st == SourceType.confluence:
-        from ingestion.connectors.confluence_connector import ConfluenceConnector
+        from .connectors.confluence_connector import ConfluenceConnector
         connector = ConfluenceConnector()
         connector.authenticate()
         result = await connector.fetch(
@@ -94,7 +94,7 @@ async def _route_source(inp: IngestionInput) -> dict[str, Any]:
 
     # ── SHAREPOINT ────────────────────────────────────────────────────────────
     if st == SourceType.sharepoint:
-        from ingestion.connectors.sharepoint_connector import SharePointConnector
+        from .connectors.sharepoint_connector import SharePointConnector
         connector = SharePointConnector()
         connector.authenticate()
         result = await connector.fetch(
@@ -106,7 +106,7 @@ async def _route_source(inp: IngestionInput) -> dict[str, Any]:
 
     # ── GDRIVE ────────────────────────────────────────────────────────────────
     if st == SourceType.gdrive:
-        from ingestion.connectors.gdrive_connector import GDriveConnector
+        from .connectors.gdrive_connector import GDriveConnector
         connector = GDriveConnector()
         connector.authenticate()
         result = await connector.fetch(
@@ -191,6 +191,7 @@ async def run_ingestion(
         raw_context=raw_text[:2000],  # first 2000 chars as raw context
         # IngestionOutput fields
         text=clean_text,
+        raw_text=raw_text,
         chunks=chunks,
         metadata=merged_meta,
         fingerprint=fingerprint,

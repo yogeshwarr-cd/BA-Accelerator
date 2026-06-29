@@ -26,8 +26,8 @@ from atlassian import Jira
 from designlab_core.utilities.env import get_env
 from designlab_core.utilities.logger import get_logger, log_error, log_info, log_warning
 
-from shared.exceptions import ConnectorAuthError
-from ingestion.connectors.base_connector import BaseConnector
+from ...shared.exceptions import ConnectorAuthError
+from .base_connector import BaseConnector
 
 logger = get_logger("ingestion.connectors.jira")
 
@@ -350,7 +350,7 @@ class JiraConnector(BaseConnector):
                 tmp_path = tmp.name
 
             try:
-                from ingestion.docling_loader import load_from_file
+                from ..docling_loader import load_from_file
                 result = await load_from_file(tmp_path)
                 return result.get("text", "")
             finally:

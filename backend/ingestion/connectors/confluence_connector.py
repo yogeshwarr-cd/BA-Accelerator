@@ -21,8 +21,8 @@ from atlassian import Confluence
 from designlab_core.utilities.env import get_env
 from designlab_core.utilities.logger import get_logger, log_error, log_info, log_warning
 
-from shared.exceptions import ConnectorAuthError
-from ingestion.connectors.base_connector import BaseConnector
+from ...shared.exceptions import ConnectorAuthError
+from .base_connector import BaseConnector
 
 logger = get_logger("ingestion.connectors.confluence")
 
