@@ -1,3 +1,11 @@
+import os
+import sys
+
+# Add the framework directory to sys.path to allow importing designlab_core directly
+framework_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../framework"))
+if framework_path not in sys.path:
+    sys.path.insert(0, framework_path)
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,9 +15,14 @@ from backend.config import settings
 from backend.db.postgres import engine, Base
 # Import all database models to register with Base
 from backend.db.models import Job, Requirement, Story, AuditLog
+from backend.validation_export.db_models import (
+    ValidationResultDB, ValidationFindingDB, BAReviewDB,
+    AuditEventDB, RevisionPackageDB, ValidatedStoryPackageDB
+)
 
 # Import API routes
 from backend.api.routes import ingest, pipeline, stories, audit
+from backend.validation_export.api import router as validation_router
 from backend.api.middleware import RequestLoggingMiddleware
 from backend.shared.logger import get_logger
 
@@ -38,6 +51,7 @@ app.include_router(ingest.router)
 app.include_router(pipeline.router)
 app.include_router(stories.router)
 app.include_router(audit.router)
+app.include_router(validation_router)
 
 @app.on_event("startup")
 async def on_startup():

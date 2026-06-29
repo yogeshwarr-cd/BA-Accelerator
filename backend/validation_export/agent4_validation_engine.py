@@ -1,8 +1,29 @@
+import os
+import time
+import asyncio
 from typing import Dict, Any, Optional, List
-from backend.validation_export.schemas import ValidationEngineOutput, InvestResult, HallucinationResult
-from backend.validation_export.invest_validator import InvestValidator
-from backend.validation_export.hallucination_check import HallucinationChecker
-from backend.validation_export.coverage_report import CoverageReporter
+from backend.validation_export.schemas import (
+    ValidationEngineOutput, 
+    ValidationContext, 
+    ValidationExecutionSummary, 
+    DecisionOutcome
+)
+from backend.validation_export.context import ValidationContextBuilder
+from backend.validation_export.decision_rules import DecisionRulesEngine
+from backend.validation_export.reporting import ReportingEngine
+from backend.validation_export.services.audit_service import AuditService
+
+# Import all 12 validators
+from backend.validation_export.validators import (
+    StructuralValidator, TraceabilityValidator, CoverageValidator,
+    BusinessRulesValidator, DependencyValidator, AcceptanceCriteriaValidator,
+    InvestValidator, SemanticValidator, HallucinationValidator,
+    ConsistencyValidator, DuplicateValidator, TechnicalValidator
+)
+
+# Database
+from backend.db.postgres import AsyncSessionLocal
+from backend.validation_export.db_models import ValidationResultDB, ValidationFindingDB
 from backend.shared.logger import get_logger
 
 logger = get_logger(__name__)
@@ -10,13 +31,18 @@ logger = get_logger(__name__)
 async def run(input_data: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> ValidationEngineOutput:
     """
     Agent 4: Validation Engine.
-    Executes INVEST checks, hallucination checks, coverage checks, and calculates quality rating.
+    Executes the 12 validators in parallel, applies the Decision Rules Engine,
+    generates validation reports, and determines the routing path.
     """
-    logger.info("Executing Agent 4 (Validation Engine)...")
+    job_id = input_data.get("job_id") or "DEV-JOB-123"
+    retry_count = input_data.get("retry_count", 0)
     
+    logger.info(f"Executing Agent 4 Validation Engine for job: {job_id} (Attempt: {retry_count})...")
+    await AuditService.log_event(job_id, "VALIDATION_STARTED", {"retry_count": retry_count})
+
     stories = input_data.get("user_stories", [])
     requirements = input_data.get("requirements", [])
-    
+
     # 1. Edge case: empty data
     if not stories:
         logger.warning("No stories passed to Agent 4. Approving default empty dataset.")
@@ -25,57 +51,130 @@ async def run(input_data: Dict[str, Any], config: Optional[Dict[str, Any]] = Non
             hallucination_results=[],
             coverage_verified=[],
             quality_score=0.0,
-            is_approved=False
+            is_approved=False,
+            summary=None
         )
 
-    # 2. Trigger concurrent runners
-    invest_val = InvestValidator()
-    hallucination_chk = HallucinationChecker()
-    
-    invest_results = await invest_val.validate_all(stories)
-    hallucination_results = await hallucination_chk.audit_all(stories, requirements)
-    coverage_res = CoverageReporter.calculate_coverage(stories, requirements)
+    # 2. Build Validation Context
+    context = ValidationContextBuilder.build(input_data)
 
-    # 3. Calculate scores
-    # 3.1 INVEST score (ratio of True parameters out of total checks)
-    total_checks = len(invest_results) * 6
-    passed_checks = 0
-    for r in invest_results:
-        passed_checks += sum([
-            1 if r.independent else 0,
-            1 if r.negotiable else 0,
-            1 if r.valuable else 0,
-            1 if r.estimable else 0,
-            1 if r.small else 0,
-            1 if r.testable else 0
-        ])
-    invest_score = (passed_checks / total_checks) * 100.0 if total_checks > 0 else 0.0
+    # 3. Instantiate Validators
+    validators = [
+        StructuralValidator(),
+        TraceabilityValidator(),
+        CoverageValidator(),
+        BusinessRulesValidator(),
+        DependencyValidator(),
+        AcceptanceCriteriaValidator(),
+        InvestValidator(),
+        SemanticValidator(),
+        HallucinationValidator(),
+        ConsistencyValidator(),
+        DuplicateValidator(),
+        TechnicalValidator()
+    ]
 
-    # 3.2 Hallucination score (ratio of clean stories)
-    hallucination_free = sum([0 if r.has_hallucinations else 1 for r in hallucination_results])
-    hallucination_score = (hallucination_free / len(hallucination_results)) * 100.0 if hallucination_results else 0.0
+    # 4. Execute all 12 validators concurrently
+    start_time = time.perf_counter()
+    results = await asyncio.gather(*[v.validate(context) for v in validators])
+    total_time = (time.perf_counter() - start_time) * 1000.0
 
-    # 3.3 Coverage score
-    coverage_score = coverage_res.get("coverage_percentage", 0.0)
+    # 5. Aggregate Findings and Statistics
+    findings = []
+    validators_passed = []
+    validators_failed = []
+    critical_count = 0
+    major_count = 0
+    minor_count = 0
+    info_count = 0
 
-    # 3.4 Aggregated Quality Score (weighted average)
-    quality_score = (0.4 * invest_score) + (0.3 * hallucination_score) + (0.3 * coverage_score)
-    quality_score = round(quality_score, 2)
+    for r in results:
+        findings.extend(r.findings)
+        if r.status == "PASSED":
+            validators_passed.append(r.validator_name)
+        else:
+            validators_failed.append(r.validator_name)
+            
+        critical_count += r.severity_summary.get("CRITICAL", 0)
+        major_count += r.severity_summary.get("MAJOR", 0)
+        minor_count += r.severity_summary.get("MINOR", 0)
+        info_count += r.severity_summary.get("INFO", 0)
 
-    # Approval criteria threshold defaults to 80
-    approval_threshold = 80.0
-    is_approved = quality_score >= approval_threshold
+    # Calculate Coverage Score
+    total_reqs = len(requirements)
+    uncovered_req_ids = {f.id.split("-")[-1] for f in findings if "COV-UNCOVERED-REQ" in f.id}
+    coverage_pct = ((total_reqs - len(uncovered_req_ids)) / total_reqs * 100.0) if total_reqs > 0 else 100.0
 
-    logger.info(f"Agent 4 results: Quality={quality_score} (INVEST={invest_score:.1f}%, No-Hallucination={hallucination_score:.1f}%, Coverage={coverage_score:.1f}%), Approved: {is_approved}")
-
-    return ValidationEngineOutput(
-        invest_results=invest_results,
-        hallucination_results=hallucination_results,
-        coverage_verified=coverage_res.get("requirements_covered", []),
-        quality_score=quality_score,
-        is_approved=is_approved
+    # 6. Build Execution Summary
+    summary = ValidationExecutionSummary(
+        job_id=job_id,
+        validators_passed=validators_passed,
+        validators_failed=validators_failed,
+        critical_count=critical_count,
+        major_count=major_count,
+        minor_count=minor_count,
+        info_count=info_count,
+        execution_time=round(total_time, 2),
+        decision=DecisionOutcome.PASS  # placeholder
     )
 
-# INTEGRATION NOTE
-# The function implements the signature: async def run(input, config) -> OutputModel.
-# The quality score (0-100) dictates if the orchestrator moves to human review or export.
+    # 7. Evaluate Decision Rules
+    decision_engine = DecisionRulesEngine()
+    decision = decision_engine.evaluate(summary, coverage_pct, retry_count)
+    summary.decision = decision
+
+    is_approved = decision == DecisionOutcome.PASS
+
+    # Calculate Quality Score
+    penalty = (critical_count * 25) + (major_count * 10) + (minor_count * 3) + (info_count * 1)
+    quality_score = max(0.0, 100.0 - penalty)
+
+    # 8. Persist Results to Database
+    async with AsyncSessionLocal() as session:
+        try:
+            db_result = ValidationResultDB(
+                id=str(uuid_id := os.urandom(16).hex()),
+                job_id=job_id,
+                quality_score=quality_score,
+                coverage_score=round(coverage_pct, 2),
+                traceability_score=round(100.0 - (len([f for f in findings if "TRACE-" in f.id]) * 15), 2),
+                decision=decision.value,
+                retry_count=retry_count
+            )
+            session.add(db_result)
+            
+            for f in findings:
+                db_finding = ValidationFindingDB(
+                    id=f.id,
+                    validation_result_id=uuid_id,
+                    validator_name=f.validator_name,
+                    title=f.title,
+                    description=f.description,
+                    severity=f.severity.value,
+                    field=f.field,
+                    mitigation=f.mitigation
+                )
+                session.add(db_finding)
+                
+            await session.commit()
+            logger.info(f"Validation result and {len(findings)} findings saved to DB for job: {job_id}")
+        except Exception as e:
+            logger.error(f"Failed to persist validation results for job {job_id}: {str(e)}")
+
+    # Log completion audit event
+    await AuditService.log_event(
+        job_id, 
+        "VALIDATION_COMPLETED", 
+        {"decision": decision.value, "failed_validators": validators_failed, "quality_score": quality_score}
+    )
+
+    logger.info(f"Agent 4 execution complete. Decision: {decision.value} | Quality Score: {quality_score}")
+
+    return ValidationEngineOutput(
+        invest_results=[],  # Deprecated in favor of the unified summary
+        hallucination_results=[],  # Deprecated in favor of the unified summary
+        coverage_verified=list(set(requirements) - uncovered_req_ids) if isinstance(requirements, list) else [],
+        quality_score=quality_score,
+        is_approved=is_approved,
+        summary=summary
+    )
