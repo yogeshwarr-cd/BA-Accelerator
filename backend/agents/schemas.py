@@ -92,9 +92,42 @@ class PrimaryInput(BaseModel):
     dependencies: List[Dependency] = Field(default_factory=list, description="Requirement dependencies")
 
 class Agent1RequirementIntelligenceOutput(BaseModel):
-    """Agent 1 output conforming to exact specification"""
+    """Agent 1 output conforming to the structured specification."""
     primary_input: PrimaryInput = Field(..., description="Extracted requirements, rules, actors, dependencies")
     validation_context: ValidationContext = Field(..., description="Quality validation, conflicts, ambiguities, domain, confidence")
+
+    @property
+    def requirements(self) -> List[ExtractedRequirement]:
+        """Compatibility helper for older pipeline code expecting flat requirement items."""
+        return [
+            ExtractedRequirement(
+                id=req.id,
+                content=req.description,
+                actors=[actor.name for actor in self.primary_input.actors],
+                business_rules=[rule.rule for rule in self.primary_input.business_rules],
+            )
+            for req in self.primary_input.functional_requirements
+        ]
+
+    @property
+    def actors(self) -> List[str]:
+        return [actor.name for actor in self.primary_input.actors]
+
+    @property
+    def business_rules(self) -> List[str]:
+        return [rule.rule for rule in self.primary_input.business_rules]
+
+    @property
+    def ambiguities(self) -> List[str]:
+        return [ambiguity.issue for ambiguity in self.validation_context.ambiguities]
+
+    @property
+    def conflicts(self) -> List[str]:
+        return [conflict.issue for conflict in self.validation_context.conflicts]
+
+    @property
+    def confidence_score(self) -> float:
+        return float(self.validation_context.confidence_score)
 
 
 # --- Agent 2 (Epic & Feature Planner) Schemas ---
